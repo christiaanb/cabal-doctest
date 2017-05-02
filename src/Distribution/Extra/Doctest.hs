@@ -76,6 +76,10 @@ import System.FilePath
 import Distribution.Simple.BuildPaths
        (autogenComponentModulesDir)
 #endif
+#if MIN_VERSION_Cabal(2,0,0)
+import Distribution.Types.MungedPackageId
+import Distribution.Verbosity
+#endif
 
 #if MIN_VERSION_directory(1,2,2)
 import System.Directory
@@ -181,7 +185,11 @@ generateBuildModule testSuiteName flags pkg lbi = do
       createDirectoryIfMissingVerbose verbosity True testAutogenDir
 
       -- write autogen'd file
+#if MIN_VERSION_Cabal(2,0,0)
+      rewriteFile normal (testAutogenDir </> "Build_doctests.hs") $ unlines
+#else
       rewriteFile (testAutogenDir </> "Build_doctests.hs") $ unlines
+#endif
         [ "module Build_doctests where"
         , ""
         -- -package-id etc. flags
@@ -205,7 +213,12 @@ generateBuildModule testSuiteName flags pkg lbi = do
     formatOne (installedPkgId, pkgId)
       -- The problem is how different cabal executables handle package databases
       -- when doctests depend on the library
+#if MIN_VERSION_Cabal(2,0,0)
+      | computeCompatPackageId (packageId pkg) Nothing == pkgId
+      = "-package=" ++ display pkgId
+#else
       | packageId pkg == pkgId = "-package=" ++ display pkgId
+#endif
       | otherwise              = "-package-id=" ++ display installedPkgId
 
     -- From Distribution.Simple.Program.GHC
@@ -245,5 +258,9 @@ generateBuildModule testSuiteName flags pkg lbi = do
        isSpecific (SpecificPackageDB _) = True
        isSpecific _                     = False
 
+#if MIN_VERSION_Cabal(2,0,0)
+testDeps :: ComponentLocalBuildInfo -> ComponentLocalBuildInfo -> [(InstalledPackageId, MungedPackageId)]
+#else
 testDeps :: ComponentLocalBuildInfo -> ComponentLocalBuildInfo -> [(InstalledPackageId, PackageId)]
+#endif
 testDeps xs ys = nub $ componentPackageDeps xs ++ componentPackageDeps ys
