@@ -78,7 +78,6 @@ import Distribution.Simple.BuildPaths
 #endif
 #if MIN_VERSION_Cabal(2,0,0)
 import Distribution.Types.MungedPackageId
-import Distribution.Verbosity
 #endif
 
 #if MIN_VERSION_directory(1,2,2)
@@ -185,11 +184,7 @@ generateBuildModule testSuiteName flags pkg lbi = do
       createDirectoryIfMissingVerbose verbosity True testAutogenDir
 
       -- write autogen'd file
-#if MIN_VERSION_Cabal(2,0,0)
-      rewriteFile normal (testAutogenDir </> "Build_doctests.hs") $ unlines
-#else
       rewriteFile (testAutogenDir </> "Build_doctests.hs") $ unlines
-#endif
         [ "module Build_doctests where"
         , ""
         -- -package-id etc. flags
